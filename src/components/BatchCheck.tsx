@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Papa from "papaparse";
-import { SAMPLE_CASES } from "@/data/samples";
+import { SAMPLE_CASES, type SampleCase } from "@/data/samples";
+import { REAL_CASES } from "@/data/realSamples";
 import { runWithConcurrency, verifyOne } from "@/lib/clientVerify";
 import type { ApplicationData, BeverageType, Verdict, VerifyResponse } from "@/lib/types";
 import ResultCard from "./ResultCard";
@@ -90,20 +91,23 @@ export default function BatchCheck() {
     });
   }
 
-  async function loadSampleBatch() {
+  async function loadSampleBatch(cases: SampleCase[], label: string) {
     setError(null);
     const loaded = await Promise.all(
-      SAMPLE_CASES.map(async (s) => {
+      cases.map(async (s) => {
         const blob = await (await fetch(s.imagePath)).blob();
+        const ext = s.imagePath.endsWith(".jpg") ? "jpg" : "png";
         return {
-          file: new File([blob], `${s.id}.png`, { type: "image/png" }),
+          file: new File([blob], `${s.id}.${ext}`, {
+            type: ext === "jpg" ? "image/jpeg" : "image/png",
+          }),
           application: s.application,
           state: "waiting" as const,
         };
       }),
     );
     setItems(loaded);
-    setCsvName("sample batch (built in)");
+    setCsvName(label);
     setProgress(0);
     setExpanded(null);
   }
@@ -163,15 +167,25 @@ export default function BatchCheck() {
     <div className="space-y-6">
       <div className="form-card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <p className="text-sm text-ink-soft">
-          New here? Load a built-in batch that shows all three piles.
+          New here? Load a built-in batch — demo labels covering all three piles, or real
+          approved labels from TTB&apos;s public COLA registry.
         </p>
-        <button
-          type="button"
-          onClick={loadSampleBatch}
-          className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
-        >
-          Load sample batch
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => loadSampleBatch(SAMPLE_CASES, "demo batch (built in)")}
+            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+          >
+            Load demo batch
+          </button>
+          <button
+            type="button"
+            onClick={() => loadSampleBatch(REAL_CASES, "real TTB labels (built in)")}
+            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+          >
+            Load real TTB labels
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

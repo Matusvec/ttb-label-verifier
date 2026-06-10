@@ -68,6 +68,30 @@ application ──► verification (pure TypeScript)    ──► per-field chec
   test cases (wrong ABV, title-case warning, near-miss brand, missing
   warning) are precisely controlled.
 
+## Test data: synthetic defects + real approved labels
+
+Two bundled test sets, both runnable from the UI or via scripts:
+
+- **Demo set** (`public/samples/`, generated SVG labels) — six cases with
+  *controlled* defects: wrong ABV, title-case government warning, near-miss
+  brand name, missing warning. Covers all three piles deterministically.
+  Run: `node scripts/e2e-samples.mjs`.
+- **Real set** (`public/cola/`) — six labels **approved by TTB**, pulled from
+  the [Public COLA Registry](https://ttbonline.gov/colasonline/publicSearchColasBasic.do)
+  (Buffalo Trace, Sierra Nevada, Kendall-Jackson — spirits, beer, and wine),
+  paired with their actual application data and identified by TTB ID. Since
+  TTB approved them, the app should too — a calibration check against real
+  agent decisions. Run: `node scripts/e2e-cola.mjs`. Real applications
+  submit multi-image label sets (front/back/neck), composited here into one
+  image per application; handling multi-image sets natively is noted as
+  future work.
+
+The real set caught three bugs the synthetic set couldn't: approved labels
+print the warning *body* in all caps (only the header's case is mandated by
+27 CFR 16.21), hyphenate words across line breaks ("PREG-NANCY"), and embed
+required text inside longer phrases (class/type within marketing copy,
+bottler lines with phone numbers appended). Each fix is now a unit test.
+
 ## Assumptions
 
 - **Beverage-type rules are simplified**: ABV is treated as mandatory for

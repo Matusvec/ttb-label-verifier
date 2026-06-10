@@ -1,5 +1,5 @@
 /**
- * Runs the real TTB COLA registry test set (test-data/cola/) through the
+ * Runs the real TTB COLA registry test set (public/cola/) through the
  * API. These are all APPROVED labels, so the expected pile is "accepted" —
  * anything else is printed with its failing checks for inspection.
  * Usage: node scripts/e2e-cola.mjs [baseUrl]
@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 
 const BASE = process.argv[2] ?? "http://localhost:3456";
-const DIR = new URL("../test-data/cola/", import.meta.url);
+const DIR = new URL("../public/cola/", import.meta.url);
 
 const csv = readFileSync(new URL("applications.csv", DIR), "utf8").trim().split("\n");
 const header = csv[0].split(",");
