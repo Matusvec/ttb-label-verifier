@@ -46,6 +46,31 @@ describe("verifyLabel — the three piles", () => {
     expect(abv?.note).toContain("40");
   });
 
+  it("routes partial brand overlap to review (blind test: Guinness)", () => {
+    const result = verifyLabel(
+      { ...app, brandName: "GUINNESS MIDNIGHT HARMONY" },
+      { ...goodExtraction, brandName: clear("GUINNESS OPEN GATE BREWERY") },
+    );
+    expect(result.checks.find((c) => c.field === "brandName")?.status).toBe("needs_review");
+  });
+
+  it("still rejects entirely different brands", () => {
+    const result = verifyLabel(app, {
+      ...goodExtraction,
+      brandName: clear("SUNSET RIDGE CELLARS"),
+    });
+    expect(result.verdict).toBe("rejected");
+  });
+
+  it("routes class-code vs label-designation differences to review, not rejection (blind test: La Crema)", () => {
+    const result = verifyLabel(
+      { ...app, beverageType: "wine", classType: "TABLE RED WINE" },
+      { ...goodExtraction, classType: clear("PINOT NOIR") },
+    );
+    expect(result.checks.find((c) => c.field === "classType")?.status).toBe("needs_review");
+    expect(result.verdict).toBe("needs_review");
+  });
+
   it("sends near-miss brand names to human review, not rejection", () => {
     const result = verifyLabel(app, {
       ...goodExtraction,
@@ -102,6 +127,14 @@ describe("checkWarning — strict by design", () => {
       "should\nnot drink",
     );
     expect(checkWarning(clear(wrapped), true, true).status).toBe("match");
+  });
+
+  it("tolerates whitespace before the header colon (blind test: approved Glenfiddich label)", () => {
+    const spaced = CANONICAL_WARNING.replace(
+      "GOVERNMENT WARNING:",
+      "GOVERNMENT WARNING :",
+    );
+    expect(checkWarning(clear(spaced), true, true).status).toBe("match");
   });
 
   it("accepts an all-caps body with hyphenated line wraps (real Buffalo Trace label)", () => {

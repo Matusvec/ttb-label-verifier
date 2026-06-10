@@ -65,6 +65,29 @@ export function compareText(expected: string, found: string): TextSimilarity {
   return dist <= threshold ? "close" : "different";
 }
 
+const GENERIC_TOKENS = new Set([
+  "distillery", "distilling", "brewery", "brewing", "winery", "cellars",
+  "vineyards", "vineyard", "company", "wines", "spirits", "estate",
+]);
+
+/**
+ * True when two names share a distinctive word (≥4 chars, not a generic
+ * industry term) — e.g. "GUINNESS OPEN GATE BREWERY" and "GUINNESS
+ * MIDNIGHT HARMONY" share "guinness". Used to route partial brand
+ * overlaps to human review instead of rejection.
+ */
+export function sharesSignificantToken(a: string, b: string): boolean {
+  const tokens = (s: string) =>
+    new Set(
+      normalize(s)
+        .split(" ")
+        .filter((t) => t.length >= 4 && !GENERIC_TOKENS.has(t)),
+    );
+  const ta = tokens(a);
+  for (const t of tokens(b)) if (ta.has(t)) return true;
+  return false;
+}
+
 /** Parse an alcohol-content string to a percentage number, or null. */
 export function parseAbv(text: string): number | null {
   // Prefer an explicit percentage: "45% Alc./Vol.", "ALC. 13.5% BY VOL", "5.0%"

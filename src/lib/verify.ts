@@ -1,4 +1,4 @@
-import { compareText, parseAbv, parseNetContents } from "./normalize";
+import { compareText, parseAbv, parseNetContents, sharesSignificantToken } from "./normalize";
 import { checkWarning } from "./warning";
 import type {
   ApplicationData,
@@ -58,12 +58,39 @@ function checkFuzzyField(
         note: "Very similar but not identical — possible typo. Verify manually.",
       };
     default:
+      // Partial brand overlaps ("GUINNESS OPEN GATE BREWERY" vs "GUINNESS
+      // MIDNIGHT HARMONY") are agent-judgment territory, not auto-rejections.
+      if (sharesSignificantToken(expected, extracted.text)) {
+        return {
+          ...base,
+          status: "needs_review",
+          note: "Label and application overlap but differ — verify manually.",
+        };
+      }
       return {
         ...base,
         status: "mismatch",
         note: `Label does not match the application.`,
       };
   }
+}
+
+/**
+ * Class/type is compared leniently and never auto-rejects on wording:
+ * applications carry TTB class-code vocabulary ("TABLE RED WINE") while
+ * labels print their own designation ("PINOT NOIR"), so a text difference
+ * goes to human review rather than rejection.
+ */
+function checkClassType(expected: string, extracted: ExtractedField): FieldCheck {
+  const result = checkFuzzyField("classType", "Class/type", expected, extracted);
+  if (result.status === "mismatch" && extracted.text) {
+    return {
+      ...result,
+      status: "needs_review",
+      note: "Label designation differs from the application's class/type wording — verify they describe the same product class.",
+    };
+  }
+  return result;
 }
 
 function checkAbv(app: ApplicationData, extracted: ExtractedField): FieldCheck {
@@ -181,7 +208,7 @@ export function verifyLabel(
 
   const checks: FieldCheck[] = [
     checkFuzzyField("brandName", "Brand name", app.brandName, extraction.brandName),
-    checkFuzzyField("classType", "Class/type", app.classType, extraction.classType),
+    checkClassType(app.classType, extraction.classType),
     checkAbv(app, extraction.alcoholContent),
     checkNetContents(app, extraction.netContents),
     checkOptionalField("bottlerInfo", "Bottler name & address", app.bottlerInfo, extraction.bottlerInfo),

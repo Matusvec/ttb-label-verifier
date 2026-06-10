@@ -92,6 +92,20 @@ print the warning *body* in all caps (only the header's case is mandated by
 required text inside longer phrases (class/type within marketing copy,
 bottler lines with phone numbers appended). Each fix is now a unit test.
 
+A second, **blind** evaluation followed: eight more approved labels
+(Glenfiddich, Guinness, Yellow Tail, Dogfish Head, Barefoot, Stella Artois,
+La Crema) were harvested without inspecting the artwork, paired only with
+the registry's own application fields, and run cold. That surfaced three
+calibration issues — an approved label printing "GOVERNMENT WARNING :" with
+a space before the colon, TTB class-code vocabulary ("TABLE RED WINE") never
+matching label designations ("PINOT NOIR"), and partial brand overlaps
+("GUINNESS OPEN GATE BREWERY" vs brand+fanciful "GUINNESS MIDNIGHT HARMONY")
+being hard-rejected. All three now resolve the way an agent would: the
+spacing is tolerated, and vocabulary/overlap differences route to
+**Needs Review** instead of rejection. After calibration the blind set
+produces zero false rejections; every remaining flag is a legitimate
+"have a human look" given the registry's application vocabulary.
+
 ## Assumptions
 
 - **Beverage-type rules are simplified**: ABV is treated as mandatory for

@@ -63,10 +63,11 @@ export function checkWarning(
   // must be capitalized (and bold). Approved labels print the body in
   // sentence case or all caps, so the body is compared case-insensitively
   // but word-for-word.
-  if (!found.startsWith(CANONICAL_HEADER)) {
-    const headerCaseWrong = found
-      .toLowerCase()
-      .startsWith(CANONICAL_HEADER.toLowerCase());
+  // Whitespace before the colon appears on TTB-approved labels, so the
+  // header tolerates it; the capitalization itself stays strict.
+  const headerMatch = found.match(/^GOVERNMENT WARNING\s*:/);
+  if (!headerMatch) {
+    const headerCaseWrong = /^government warning\s*:/i.test(found);
     return {
       status: "mismatch",
       note: headerCaseWrong
@@ -74,7 +75,7 @@ export function checkWarning(
         : "Warning statement does not begin with the required \"GOVERNMENT WARNING:\" header.",
     };
   }
-  const body = found.slice(CANONICAL_HEADER.length).trim();
+  const body = found.slice(headerMatch[0].length).trim();
   if (body.toLowerCase() !== CANONICAL_BODY.toLowerCase()) {
     return {
       status: "mismatch",
