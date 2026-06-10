@@ -206,7 +206,29 @@ export function verifyLabel(
     };
   }
 
+  const TYPE_LABELS: Record<string, string> = {
+    spirits: "distilled spirits",
+    wine: "wine",
+    beer: "beer/malt",
+  };
+  const apparent = extraction.apparentBeverageType;
+  const beverageTypeCheck: FieldCheck = {
+    field: "beverageType",
+    label: "Beverage type",
+    expected: TYPE_LABELS[app.beverageType],
+    found: apparent === "unknown" ? null : TYPE_LABELS[apparent],
+    ...(apparent === "unknown"
+      ? { status: "skipped" as const, note: "Could not judge the beverage category from the label." }
+      : apparent === app.beverageType
+        ? { status: "match" as const, note: "Label content is consistent with the application's beverage type." }
+        : {
+            status: "needs_review" as const,
+            note: `Application is filed as ${TYPE_LABELS[app.beverageType]} but the label appears to be ${TYPE_LABELS[apparent]} — verify the category.`,
+          }),
+  };
+
   const checks: FieldCheck[] = [
+    beverageTypeCheck,
     checkFuzzyField("brandName", "Brand name", app.brandName, extraction.brandName),
     checkClassType(app.classType, extraction.classType),
     checkAbv(app, extraction.alcoholContent),

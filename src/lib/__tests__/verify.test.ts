@@ -26,6 +26,7 @@ const goodExtraction: LabelExtraction = {
   governmentWarning: clear(CANONICAL_WARNING),
   warningHeaderAllCaps: true,
   warningHeaderBold: true,
+  apparentBeverageType: "spirits",
 };
 
 describe("verifyLabel — the three piles", () => {
@@ -106,10 +107,103 @@ describe("verifyLabel — the three piles", () => {
     expect(result.checks.find((c) => c.field === "countryOfOrigin")?.status).toBe("skipped");
   });
 
+  it("flags a beverage-type contradiction (manual test: whiskey label filed as beer)", () => {
+    const result = verifyLabel(
+      {
+        beverageType: "beer",
+        brandName: "Ston THROW",
+        classType: "Straight Ryes",
+        alcoholContent: "47.5% Alc./Vol.",
+        netContents: "750 mL",
+      },
+      {
+        ...goodExtraction,
+        brandName: clear("STONE'S THROW"),
+        classType: clear("Straight Rye Whiskey"),
+        alcoholContent: clear("47.5% ALC./VOL."),
+        apparentBeverageType: "spirits",
+      },
+    );
+    expect(result.verdict).toBe("needs_review");
+    const bev = result.checks.find((c) => c.field === "beverageType");
+    expect(bev?.status).toBe("needs_review");
+    expect(bev?.note).toContain("beer");
+    expect(bev?.note).toContain("spirits");
+  });
+
+  it("matches when label content agrees with the filed beverage type", () => {
+    const result = verifyLabel(app, goodExtraction);
+    expect(result.checks.find((c) => c.field === "beverageType")?.status).toBe("match");
+  });
+
+  it("skips the beverage-type check when the label is ambiguous", () => {
+    const result = verifyLabel(app, { ...goodExtraction, apparentBeverageType: "unknown" });
+    expect(result.checks.find((c) => c.field === "beverageType")?.status).toBe("skipped");
+    expect(result.verdict).toBe("accepted");
+  });
+
+  it("routes poor image quality to review even when all fields match", () => {
+    const result = verifyLabel(app, { ...goodExtraction, imageQuality: "poor" });
+    expect(result.verdict).toBe("needs_review");
+  });
+
+  it("treats proof-only label ABV as equivalent to a percentage application", () => {
+    const result = verifyLabel(
+      { ...app, alcoholContent: "45% Alc./Vol." },
+      { ...goodExtraction, alcoholContent: clear("90 PROOF") },
+    );
+    expect(result.checks.find((c) => c.field === "alcoholContent")?.status).toBe("match");
+  });
+
+  it("rejects a half-percent ABV discrepancy", () => {
+    const result = verifyLabel(
+      { ...app, alcoholContent: "45%" },
+      { ...goodExtraction, alcoholContent: clear("45.5% ALC./VOL.") },
+    );
+    expect(result.verdict).toBe("rejected");
+  });
+
+  it("rejects a missing brand name", () => {
+    const result = verifyLabel(app, {
+      ...goodExtraction,
+      brandName: { text: null, legibility: "absent" },
+    });
+    expect(result.verdict).toBe("rejected");
+  });
+
+  it("requires ABV on the label for spirits", () => {
+    const result = verifyLabel(app, { ...goodExtraction, alcoholContent: absent });
+    expect(result.verdict).toBe("rejected");
+  });
+
+  it("routes a label missing ABV to review for wine when the application states one", () => {
+    const result = verifyLabel(
+      { ...app, beverageType: "wine" },
+      { ...goodExtraction, apparentBeverageType: "wine", alcoholContent: absent },
+    );
+    expect(result.checks.find((c) => c.field === "alcoholContent")?.status).toBe("needs_review");
+  });
+
+  it("matches a country of origin embedded in a longer statement (real Glenfiddich)", () => {
+    const result = verifyLabel(
+      { ...app, countryOfOrigin: "United Kingdom" },
+      { ...goodExtraction, countryOfOrigin: clear("PRODUCT OF UNITED KINGDOM") },
+    );
+    expect(result.checks.find((c) => c.field === "countryOfOrigin")?.status).toBe("match");
+  });
+
+  it("falls back to text comparison when net contents cannot be parsed", () => {
+    const result = verifyLabel(
+      { ...app, netContents: "one standard bottle" },
+      { ...goodExtraction, netContents: clear("One Standard Bottle") },
+    );
+    expect(result.checks.find((c) => c.field === "netContents")?.status).toBe("match");
+  });
+
   it("does not require ABV for beer when not provided", () => {
     const result = verifyLabel(
       { ...app, beverageType: "beer", alcoholContent: "" },
-      { ...goodExtraction, alcoholContent: absent },
+      { ...goodExtraction, apparentBeverageType: "beer", alcoholContent: absent },
     );
     expect(result.checks.find((c) => c.field === "alcoholContent")?.status).toBe("skipped");
     expect(result.verdict).toBe("accepted");

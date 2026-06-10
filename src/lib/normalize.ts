@@ -5,12 +5,16 @@
  * free, offline, and unit-testable — rather than inside an LLM prompt.
  */
 
-/** Lowercase, trim, collapse whitespace, strip punctuation, unify quotes. */
+/**
+ * Lowercase, trim, collapse whitespace, strip punctuation, unify quotes,
+ * and treat "&" and "and" as equivalent (bottler names use both).
+ */
 export function normalize(text: string): string {
   return text
     .toLowerCase()
     .replace(/[‘’ʼ]/g, "'")
     .replace(/[“”]/g, '"')
+    .replace(/\s*&\s*/g, " and ")
     .replace(/[.,;:!?"()\[\]]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -116,20 +120,45 @@ const ML_PER_UNIT: Record<string, number> = {
   "fl oz": 29.5735,
   "fluid ounce": 29.5735,
   "fluid ounces": 29.5735,
+  pt: 473.176,
+  pint: 473.176,
+  pints: 473.176,
+  qt: 946.353,
+  quart: 946.353,
+  quarts: 946.353,
   gal: 3785.41,
   gals: 3785.41,
   gallon: 3785.41,
   gallons: 3785.41,
 };
 
-/** Parse a net-contents string to milliliters, or null. */
+const UNIT_PATTERN =
+  /(\d+(?:\.\d+)?)\s*(fl\s*oz|fluid ounces?|milliliters?|litres?|liters?|gallons?|gals?|pints?|quarts?|ml|cl|l|oz|pt|qt)\b/g;
+
+/**
+ * Parse a net-contents string to milliliters, or null.
+ *
+ * Handles three real label shapes:
+ * - single statement: "750 mL" → 750
+ * - compound imperial (descending units): "1 PT. 6 FL. OZ." → 473.2 + 177.4
+ * - dual statement of the same volume: "750 mL (25.4 FL OZ)" → 750
+ */
 export function parseNetContents(text: string): number | null {
-  const m = text
-    .toLowerCase()
-    .replace(/(?<=[a-z])\./g, "")
-    .match(/(\d+(?:\.\d+)?)\s*(fl\s*oz|fluid ounces?|milliliters?|litres?|liters?|gallons?|gals?|ml|cl|l|oz)\b/);
-  if (!m) return null;
-  const unit = m[2].replace(/\s+/g, " ").trim();
-  const factor = ML_PER_UNIT[unit];
-  return factor ? parseFloat(m[1]) * factor : null;
+  const cleaned = text.toLowerCase().replace(/(?<=[a-z])\./g, "");
+  const parts: { factor: number; ml: number }[] = [];
+  for (const m of cleaned.matchAll(UNIT_PATTERN)) {
+    const unit = m[2].replace(/\s+/g, " ").trim();
+    const factor = ML_PER_UNIT[unit];
+    if (!factor) return null;
+    parts.push({ factor, ml: parseFloat(m[1]) * factor });
+  }
+  if (!parts.length) return null;
+  if (parts.length === 1) return parts[0].ml;
+  // Strictly descending unit sizes ("1 PT" then "6 FL OZ") = one compound
+  // quantity; anything else ("750 mL (25.4 FL OZ)") restates the volume.
+  const descending = parts.every((p, i) => i === 0 || p.factor < parts[i - 1].factor);
+  const restated = parts.every((p) => Math.abs(p.ml - parts[0].ml) / parts[0].ml < 0.05);
+  if (restated) return parts[0].ml;
+  if (descending) return parts.reduce((sum, p) => sum + p.ml, 0);
+  return parts[0].ml;
 }

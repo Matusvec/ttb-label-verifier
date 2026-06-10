@@ -65,6 +65,39 @@ const CASES = [
     },
   },
   {
+    id: "reworded-warning",
+    expect: "rejected",
+    app: {
+      beverageType: "spirits",
+      brandName: "Juniper & Pine",
+      classType: "Dry Gin",
+      alcoholContent: "43% Alc./Vol.",
+      netContents: "750 mL",
+    },
+  },
+  {
+    id: "wrong-net-contents",
+    expect: "rejected",
+    app: {
+      beverageType: "spirits",
+      brandName: "Old Tom Distillery",
+      classType: "Kentucky Straight Bourbon Whiskey",
+      alcoholContent: "45% Alc./Vol. (90 Proof)",
+      netContents: "750 mL",
+    },
+  },
+  {
+    id: "proof-only-abv",
+    expect: "accepted",
+    app: {
+      beverageType: "spirits",
+      brandName: "Copper Canyon",
+      classType: "Straight Bourbon Whiskey",
+      alcoholContent: "45% Alc./Vol.",
+      netContents: "750 mL",
+    },
+  },
+  {
     id: "hop-haven-missing-warning",
     expect: "rejected",
     app: {

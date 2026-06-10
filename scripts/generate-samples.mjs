@@ -48,13 +48,14 @@ function labelSvg(opts) {
     net,
     bottler,
     warning,
+    warningBody = WARNING_BODY,
   } = opts;
 
   const W = 800;
   const H = 1000;
   let warningBlock = "";
   if (warning) {
-    const lines = wrap(WARNING_BODY, 62);
+    const lines = wrap(warningBody, 62);
     const tspans = lines
       .map(
         (l, i) =>
@@ -134,6 +135,37 @@ const LABELS = {
     abv: "45% ALC./VOL. (90 PROOF)",
     net: "750 mL",
     bottler: "DISTILLED AND BOTTLED BY OLD TOM DISTILLERY, BARDSTOWN, KY",
+    warning: { header: CANONICAL_HEADER, bold: true },
+  }),
+  "reworded-warning": labelSvg({
+    bg: "#efe7d4",
+    accent: "#3a5a40",
+    brand: "JUNIPER & PINE",
+    brandSize: 58,
+    classType: "Dry Gin",
+    abv: "43% ALC./VOL.",
+    net: "750 mL",
+    bottler: "DISTILLED BY JUNIPER & PINE SPIRITS, BEND, OR",
+    warning: { header: CANONICAL_HEADER, bold: true },
+    warningBody: WARNING_BODY.replace("birth defects", "birth issues"),
+  }),
+  "wrong-net-contents": labelSvg({
+    brand: "OLD TOM DISTILLERY",
+    classType: "Kentucky Straight Bourbon Whiskey",
+    abv: "45% ALC./VOL. (90 PROOF)",
+    net: "700 mL",
+    bottler: "DISTILLED AND BOTTLED BY OLD TOM DISTILLERY, BARDSTOWN, KY",
+    warning: { header: CANONICAL_HEADER, bold: true },
+  }),
+  "proof-only-abv": labelSvg({
+    bg: "#241d16",
+    ink: "#e7d9bd",
+    accent: "#b08948",
+    brand: "COPPER CANYON",
+    classType: "Straight Bourbon Whiskey",
+    abv: "90 PROOF",
+    net: "750 mL",
+    bottler: "COPPER CANYON DISTILLING CO., DENVER, CO",
     warning: { header: CANONICAL_HEADER, bold: true },
   }),
   "hop-haven-missing-warning": labelSvg({

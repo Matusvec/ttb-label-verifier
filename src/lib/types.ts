@@ -41,6 +41,8 @@ export interface LabelExtraction {
   warningHeaderAllCaps: boolean | null;
   /** Whether the warning header appears bold relative to surrounding text. */
   warningHeaderBold: boolean | null;
+  /** What category of beverage the label appears to be, judged from its content. */
+  apparentBeverageType: BeverageType | "unknown";
 }
 
 export type CheckStatus = "match" | "mismatch" | "needs_review" | "skipped";

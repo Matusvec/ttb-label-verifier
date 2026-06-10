@@ -44,16 +44,16 @@ export function checkWarning(
   headerAllCaps: boolean | null,
   headerBold: boolean | null,
 ): WarningCheckResult {
-  if (field.legibility === "absent" || !field.text) {
-    return {
-      status: "mismatch",
-      note: "No government warning statement found on the label. The warning is mandatory on all alcohol beverages.",
-    };
-  }
   if (field.legibility === "unreadable" || field.legibility === "partial") {
     return {
       status: "needs_review",
       note: "A warning statement appears to be present but could not be read reliably. Request a clearer image.",
+    };
+  }
+  if (field.legibility === "absent" || !field.text) {
+    return {
+      status: "mismatch",
+      note: "No government warning statement found on the label. The warning is mandatory on all alcohol beverages.",
     };
   }
 
@@ -97,7 +97,7 @@ export function checkWarning(
       note: "Warning text matches, but the \"GOVERNMENT WARNING\" header does not appear bold. Verify formatting manually.",
     };
   }
-  if (headerAllCaps === null) {
+  if (headerAllCaps === null || headerBold === null) {
     return {
       status: "needs_review",
       note: "Warning text matches, but header formatting could not be confirmed from the image.",

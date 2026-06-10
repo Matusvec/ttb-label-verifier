@@ -35,6 +35,10 @@ const extractionSchema = {
     governmentWarning: fieldSchema,
     warningHeaderAllCaps: { type: Type.BOOLEAN, nullable: true },
     warningHeaderBold: { type: Type.BOOLEAN, nullable: true },
+    apparentBeverageType: {
+      type: Type.STRING,
+      enum: ["spirits", "wine", "beer", "unknown"],
+    },
   },
   required: [
     "isAlcoholLabel",
@@ -48,6 +52,7 @@ const extractionSchema = {
     "governmentWarning",
     "warningHeaderAllCaps",
     "warningHeaderBold",
+    "apparentBeverageType",
   ],
 };
 
@@ -72,7 +77,8 @@ Separately observe the government warning header:
 
 Also set:
 - isAlcoholLabel: false if the image is not an alcohol beverage label at all.
-- imageQuality: "poor" if blur, glare, angle, or lighting could make any transcription unreliable; otherwise "good".`;
+- imageQuality: "poor" if blur, glare, angle, or lighting could make any transcription unreliable; otherwise "good".
+- apparentBeverageType: judging from the label's content, whether this is "spirits" (distilled: whiskey, vodka, gin, rum, tequila, liqueur), "wine" (incl. cider, sake), "beer" (incl. ale, lager, stout, malt beverages), or "unknown" if unclear.`;
 
 /**
  * Extract structured, verbatim field transcriptions from a label image.
