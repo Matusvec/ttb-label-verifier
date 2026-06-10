@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f6f2e8;
+  --paper-raised: #fdfbf4;
+  --ink: #21303f;
+  --ink-soft: #5b6878;
+  --rule: #d8d0bd;
+  --accent: #1f4e79;
+  --approve: #1d6b3c;
+  --approve-bg: #e9f2ea;
+  --reject: #9d2c1e;
+  --reject-bg: #f9ebe7;
+  --review: #8a5a00;
+  --review-bg: #f9f1dd;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-approve: var(--approve);
+  --color-approve-bg: var(--approve-bg);
+  --color-reject: var(--reject);
+  --color-reject-bg: var(--reject-bg);
+  --color-review: var(--review);
+  --color-review-bg: var(--review-bg);
+  --font-sans: var(--font-franklin);
+  --font-display: var(--font-zilla);
+  --font-mono: var(--font-plex-mono);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-franklin), Georgia, serif;
+  font-size: 17px;
+  /* Subtle paper grain */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* A filled-in value, typewritten onto the form */
+.typed {
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 0.92em;
+}
+
+/* Rubber-stamp verdict */
+.stamp {
+  display: inline-block;
+  padding: 0.3em 0.9em;
+  border: 3px double currentColor;
+  border-radius: 6px;
+  font-family: var(--font-zilla), serif;
+  font-weight: 700;
+  font-size: 1.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: rotate(-2.5deg);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='80'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.4 -0.15'/%3E%3C/filter%3E%3Crect width='220' height='80' fill='white' filter='url(%23r)'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='80'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.4 -0.15'/%3E%3C/filter%3E%3Crect width='220' height='80' fill='white' filter='url(%23r)'/%3E%3C/svg%3E");
+  animation: stamp-in 0.28s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: rotate(-2.5deg) scale(1.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-2.5deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp {
+    animation: none;
+  }
+}
+
+/* Form rule — the dotted line of a paper form */
+.form-card {
+  background-color: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(33, 48, 63, 0.06), 0 8px 24px -12px rgba(33, 48, 63, 0.12);
+}
+
+.field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.text-input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid var(--rule);
+  padding: 0.35rem 0.1rem;
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 1rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.text-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.text-input::placeholder {
+  color: #a9a292;
+  font-style: italic;
 }
