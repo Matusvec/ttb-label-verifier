@@ -5,7 +5,8 @@ import Papa from "papaparse";
 import { SAMPLE_CASES, type SampleCase } from "@/data/samples";
 import { REAL_CASES } from "@/data/realSamples";
 import { runWithConcurrency, verifyOne } from "@/lib/clientVerify";
-import type { ApplicationData, BeverageType, Verdict, VerifyResponse } from "@/lib/types";
+import { CSV_TEMPLATE, parseApplicationCsv } from "@/lib/csv";
+import type { ApplicationData, Verdict, VerifyResponse } from "@/lib/types";
 import ResultCard from "./ResultCard";
 import UploadDropzone from "./UploadDropzone";
 
@@ -16,10 +17,6 @@ interface BatchItem {
   response?: VerifyResponse;
   error?: string;
 }
-
-const CSV_TEMPLATE =
-  "filename,beverage_type,brand_name,class_type,alcohol_content,net_contents,bottler_info,country_of_origin\n" +
-  'old-tom.png,spirits,Old Tom Distillery,Kentucky Straight Bourbon Whiskey,45% Alc./Vol.,750 mL,"Bottled by Old Tom Distillery, Bardstown, KY",\n';
 
 const VERDICT_CHIP: Record<Verdict, string> = {
   accepted: "bg-approve-bg text-approve",
@@ -32,19 +29,6 @@ const VERDICT_NAME: Record<Verdict, string> = {
   rejected: "Rejected",
   needs_review: "Needs Review",
 };
-
-function rowToApplication(row: Record<string, string>): ApplicationData {
-  const type = (row.beverage_type ?? "").trim().toLowerCase();
-  return {
-    beverageType: (["spirits", "wine", "beer"].includes(type) ? type : "spirits") as BeverageType,
-    brandName: (row.brand_name ?? "").trim(),
-    classType: (row.class_type ?? "").trim(),
-    alcoholContent: (row.alcohol_content ?? "").trim(),
-    netContents: (row.net_contents ?? "").trim(),
-    bottlerInfo: (row.bottler_info ?? "").trim() || undefined,
-    countryOfOrigin: (row.country_of_origin ?? "").trim() || undefined,
-  };
-}
 
 /** Batch flow: many images + a CSV of application rows → three piles. */
 export default function BatchCheck() {
@@ -66,29 +50,26 @@ export default function BatchCheck() {
     });
   }
 
-  function loadCsv(file: File) {
+  async function loadCsv(file: File) {
     setCsvName(file.name);
     setError(null);
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (parsed) => {
-        const map = new Map<string, ApplicationData>();
-        for (const row of parsed.data) {
-          const name = (row.filename ?? "").trim();
-          if (name) map.set(name, rowToApplication(row));
-        }
-        if (!map.size) {
-          setError("No rows with a filename column found in that CSV — download the template to see the expected format.");
-          return;
-        }
-        setApps(map);
-        setItems((prev) =>
-          prev.map((item) => ({ ...item, application: map.get(item.file.name) ?? null })),
-        );
-      },
-      error: () => setError("That CSV could not be read."),
-    });
+    try {
+      const rows = await parseApplicationCsv(file);
+      const map = new Map<string, ApplicationData>();
+      for (const row of rows) {
+        if (row.filename) map.set(row.filename, row.application);
+      }
+      if (!map.size) {
+        setError("No rows with a filename column found in that CSV — download the template to see the expected format.");
+        return;
+      }
+      setApps(map);
+      setItems((prev) =>
+        prev.map((item) => ({ ...item, application: map.get(item.file.name) ?? null })),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That CSV could not be read.");
+    }
   }
 
   async function loadSampleBatch(cases: SampleCase[], label: string) {
@@ -165,29 +146,6 @@ export default function BatchCheck() {
 
   return (
     <div className="space-y-6">
-      <div className="form-card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-        <p className="text-sm text-ink-soft">
-          New here? Load a built-in batch — demo labels covering all three piles, or real
-          approved labels from TTB&apos;s public COLA registry.
-        </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => loadSampleBatch(SAMPLE_CASES, "demo batch (built in)")}
-            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
-          >
-            Load demo batch
-          </button>
-          <button
-            type="button"
-            onClick={() => loadSampleBatch(REAL_CASES, "real TTB labels (built in)")}
-            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
-          >
-            Load real TTB labels
-          </button>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="form-card p-6">
           <h2 className="font-display mb-4 text-xl font-semibold">1. Label images</h2>
@@ -294,6 +252,28 @@ export default function BatchCheck() {
           </button>
         </>
       )}
+
+      <details className="text-sm text-ink-soft">
+        <summary className="cursor-pointer hover:text-ink">
+          No files handy? Load a built-in batch
+        </summary>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => loadSampleBatch(SAMPLE_CASES, "demo batch (built in)")}
+            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+          >
+            Demo labels (all three piles)
+          </button>
+          <button
+            type="button"
+            onClick={() => loadSampleBatch(REAL_CASES, "real TTB labels (built in)")}
+            className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+          >
+            Real approved TTB labels
+          </button>
+        </div>
+      </details>
     </div>
   );
 }

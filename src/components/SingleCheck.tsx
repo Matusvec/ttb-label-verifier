@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SAMPLE_CASES, type SampleCase } from "@/data/samples";
 import { verifyOne } from "@/lib/clientVerify";
+import { parseApplicationCsv, type CsvApplicationRow } from "@/lib/csv";
 import type { ApplicationData, BeverageType, VerifyResponse } from "@/lib/types";
 import ResultCard from "./ResultCard";
 import UploadDropzone from "./UploadDropzone";
@@ -23,14 +24,15 @@ const BEVERAGE_OPTIONS: { value: BeverageType; label: string }[] = [
   { value: "beer", label: "Beer / Malt" },
 ];
 
-/** Single-label flow: application form + image → verdict card. */
+/** Single-label flow: application form (typed or CSV-imported) + image → verdict. */
 export default function SingleCheck() {
   const [form, setForm] = useState<ApplicationData>(EMPTY_FORM);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<VerifyResponse | null>(null);
-  const [sampleHint, setSampleHint] = useState<string | null>(null);
+  const [csvRows, setCsvRows] = useState<CsvApplicationRow[]>([]);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,10 +43,20 @@ export default function SingleCheck() {
     setForm((f) => ({ ...f, [key]: value }));
   };
 
+  async function importCsv(csvFile: File) {
+    setError(null);
+    try {
+      const rows = await parseApplicationCsv(csvFile);
+      setCsvRows(rows);
+      setForm({ ...EMPTY_FORM, ...rows[0].application });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "That CSV could not be read.");
+    }
+  }
+
   async function loadSample(sample: SampleCase) {
     setError(null);
     setResponse(null);
-    setSampleHint(sample.demonstrates);
     setForm({ ...EMPTY_FORM, ...sample.application });
     try {
       const res = await fetch(sample.imagePath);
@@ -75,27 +87,49 @@ export default function SingleCheck() {
 
   return (
     <div className="space-y-6">
-      <div className="form-card px-5 py-4">
-        <p className="field-label mb-2">Try an example</p>
-        <div className="flex flex-wrap gap-2">
-          {SAMPLE_CASES.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => loadSample(s)}
-              className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
-        {sampleHint && <p className="mt-3 text-sm text-ink-soft italic">{sampleHint}</p>}
-      </div>
-
       <form onSubmit={submit} className="grid gap-6 lg:grid-cols-2">
         <fieldset className="form-card space-y-5 p-6">
           <legend className="sr-only">Application data</legend>
-          <h2 className="font-display text-xl font-semibold">1. Application details</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display text-xl font-semibold">1. Application details</h2>
+            <button
+              type="button"
+              onClick={() => csvInputRef.current?.click()}
+              className="rounded-md border border-rule bg-paper px-3 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+            >
+              Import from CSV
+            </button>
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={(e) => {
+                if (e.target.files?.[0]) importCsv(e.target.files[0]);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {csvRows.length > 1 && (
+            <label className="block">
+              <span className="field-label">Application from CSV ({csvRows.length} rows)</span>
+              <select
+                className="text-input mt-1 cursor-pointer"
+                onChange={(e) => {
+                  const row = csvRows[Number(e.target.value)];
+                  if (row) setForm({ ...EMPTY_FORM, ...row.application });
+                }}
+              >
+                {csvRows.map((row, i) => (
+                  <option key={i} value={i}>
+                    {row.application.brandName}
+                    {row.filename ? ` (${row.filename})` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <div>
             <p className="field-label mb-2">Beverage type</p>
@@ -168,6 +202,25 @@ export default function SingleCheck() {
           <ResultCard response={response} />
         </div>
       )}
+
+      <details className="text-sm text-ink-soft">
+        <summary className="cursor-pointer hover:text-ink">
+          No label handy? Load a built-in example
+        </summary>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {SAMPLE_CASES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => loadSample(s)}
+              title={s.demonstrates}
+              className="rounded-full border border-rule bg-paper px-4 py-1.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors cursor-pointer"
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }
