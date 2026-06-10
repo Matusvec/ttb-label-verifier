@@ -60,7 +60,7 @@ application ──► verification (pure TypeScript)    ──► per-field chec
 
 - **Next.js 16 / React / TypeScript / Tailwind 4** — one repo, API routes and
   UI together, deployed on Vercel.
-- **Gemini 2.5 Flash** (`@google/genai`) — vision extraction with a strict
+- **Gemini 3.5 Flash** (`@google/genai`) — vision extraction with a strict
   JSON response schema and thinking disabled for latency.
 - **Vitest** — 28 unit tests over the verification rules, including the
   title-case-warning rejection and the model-autocorrect cross-check.
