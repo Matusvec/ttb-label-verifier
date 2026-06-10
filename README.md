@@ -117,10 +117,14 @@ produces zero false rejections; every remaining flag is a legitimate
 - The mandatory warning text is the 27 CFR Part 16 statement; "bold header"
   compliance is approximated by the vision model's visual judgment, so an
   un-bold header lands in Needs Review rather than auto-rejection.
-- Sample labels are flat artwork. Photographed bottles (glare, curvature,
-  angle) generally still extract, but poor-quality images intentionally route
-  to **Needs Review** — per Jenny, agents currently reject and request a
-  better image, and this prototype keeps a human in that loop.
+- Sample labels are flat artwork, but imperfect photos were tested by
+  synthetically degrading a known label: with moderate tilt, perspective,
+  noise, and blur the fields still extract and verify; under heavy blur the
+  system routes to **Needs Review** with "request a clearer image" rather
+  than guessing — per Jenny, agents currently reject and request a better
+  image, and this prototype keeps a human in that loop. Large photos are
+  downscaled in the browser before upload (phone photos run 5–12 MB;
+  Vercel's payload cap is 4.5 MB).
 
 ## Trade-offs & known limitations
 

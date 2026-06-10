@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SAMPLE_CASES, type SampleCase } from "@/data/samples";
 import { verifyOne } from "@/lib/clientVerify";
 import type { ApplicationData, BeverageType, VerifyResponse } from "@/lib/types";
@@ -31,6 +31,11 @@ export default function SingleCheck() {
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<VerifyResponse | null>(null);
   const [sampleHint, setSampleHint] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (response) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [response]);
 
   const set = (key: keyof ApplicationData) => (value: string) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -158,7 +163,11 @@ export default function SingleCheck() {
         </div>
       </form>
 
-      {response && <ResultCard response={response} />}
+      {response && (
+        <div ref={resultRef} className="scroll-mt-4">
+          <ResultCard response={response} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,15 +1,17 @@
+import { prepareImage } from "./clientImage";
 import type { ApplicationData, VerifyResponse } from "./types";
 
 /**
  * Submit one label image + application data to the verification API.
- * Throws an Error with a user-facing message on failure.
+ * Large images are downscaled client-side first. Throws an Error with a
+ * user-facing message on failure.
  */
 export async function verifyOne(
   image: File,
   application: ApplicationData,
 ): Promise<VerifyResponse> {
   const form = new FormData();
-  form.append("image", image);
+  form.append("image", await prepareImage(image));
   form.append("application", JSON.stringify(application));
   let res: Response;
   try {

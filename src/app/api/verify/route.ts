@@ -6,7 +6,9 @@ import type { ApplicationData, BeverageType, VerifyResponse } from "@/lib/types"
 
 export const maxDuration = 30;
 
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+// Vercel's serverless request payload cap is 4.5 MB; the client downscales
+// large images before upload, so anything bigger than this is anomalous.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const BEVERAGE_TYPES: BeverageType[] = ["spirits", "wine", "beer"];
 
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
     return badRequest("Unsupported image type — please upload a PNG, JPEG, or WebP.");
   }
   if (image.size > MAX_IMAGE_BYTES) {
-    return badRequest("Image is too large (8 MB maximum).");
+    return badRequest("Image is too large — please use an image under 4 MB.");
   }
 
   let app: ApplicationData;

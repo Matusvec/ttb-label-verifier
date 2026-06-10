@@ -102,7 +102,7 @@ export default function UploadDropzone({
             {multiple ? "Click to add label images" : "Click to add the label image"}
           </span>
           <span className="text-sm text-ink-soft">
-            or drag and drop — PNG, JPEG, or WebP, up to 8 MB
+            or drag and drop — PNG, JPEG, or WebP — large photos are resized automatically
           </span>
         </span>
       )}
