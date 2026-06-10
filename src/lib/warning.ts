@@ -10,10 +10,20 @@ export const CANONICAL_WARNING =
   "birth defects. (2) Consumption of alcoholic beverages impairs your " +
   "ability to drive a car or operate machinery, and may cause health problems.";
 
-/** Collapse whitespace/line wraps but preserve case and punctuation. */
+/**
+ * Collapse whitespace/line wraps and rejoin words hyphenated across line
+ * breaks (real labels print e.g. "PREG-\nNANCY"), preserving case and
+ * punctuation.
+ */
 function collapseWs(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text
+    .replace(/(\p{L})-\s+(\p{L})/gu, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
 }
+
+const CANONICAL_HEADER = "GOVERNMENT WARNING:";
+const CANONICAL_BODY = CANONICAL_WARNING.slice(CANONICAL_HEADER.length).trim();
 
 export interface WarningCheckResult {
   status: CheckStatus;
@@ -49,15 +59,26 @@ export function checkWarning(
 
   const found = collapseWs(field.text);
 
-  if (found !== CANONICAL_WARNING) {
-    // Distinguish "right words, wrong formatting" from "wrong words" for the note.
-    const caseInsensitiveMatch =
-      found.toLowerCase() === CANONICAL_WARNING.toLowerCase();
+  // 27 CFR 16.21 prescribes case only for the header: "GOVERNMENT WARNING"
+  // must be capitalized (and bold). Approved labels print the body in
+  // sentence case or all caps, so the body is compared case-insensitively
+  // but word-for-word.
+  if (!found.startsWith(CANONICAL_HEADER)) {
+    const headerCaseWrong = found
+      .toLowerCase()
+      .startsWith(CANONICAL_HEADER.toLowerCase());
     return {
       status: "mismatch",
-      note: caseInsensitiveMatch
-        ? "Warning text is present but capitalization deviates from the required format (e.g. \"GOVERNMENT WARNING\" must be in all capitals)."
-        : "Warning text deviates from the mandatory statement. The warning must match 27 CFR Part 16 word-for-word.",
+      note: headerCaseWrong
+        ? "The \"GOVERNMENT WARNING\" header is not printed in all capital letters as required."
+        : "Warning statement does not begin with the required \"GOVERNMENT WARNING:\" header.",
+    };
+  }
+  const body = found.slice(CANONICAL_HEADER.length).trim();
+  if (body.toLowerCase() !== CANONICAL_BODY.toLowerCase()) {
+    return {
+      status: "mismatch",
+      note: "Warning text deviates from the mandatory statement. The warning must match 27 CFR Part 16 word-for-word.",
     };
   }
 

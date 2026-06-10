@@ -104,6 +104,14 @@ describe("checkWarning — strict by design", () => {
     expect(checkWarning(clear(wrapped), true, true).status).toBe("match");
   });
 
+  it("accepts an all-caps body with hyphenated line wraps (real Buffalo Trace label)", () => {
+    const allCaps = CANONICAL_WARNING.toUpperCase().replace(
+      "PREGNANCY",
+      "PREG-\nNANCY",
+    );
+    expect(checkWarning(clear(allCaps), true, true).status).toBe("match");
+  });
+
   it("rejects Jenny's title-case warning", () => {
     const titleCase = CANONICAL_WARNING.replace(
       "GOVERNMENT WARNING:",

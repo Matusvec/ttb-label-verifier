@@ -36,18 +36,30 @@ export function levenshtein(a: string, b: string): number {
   return prev[b.length];
 }
 
-export type TextSimilarity = "exact" | "case_only" | "close" | "different";
+export type TextSimilarity =
+  | "exact"
+  | "case_only"
+  | "contains"
+  | "contained"
+  | "close"
+  | "different";
 
 /**
  * Compare two strings the way a reasonable agent would:
  * identical → exact; differs only in case/punctuation/spacing → case_only;
- * small edit distance (≤1 edit per 8 chars, min 1) → close; else different.
+ * the expected value appears inside the label text (labels surround
+ * required info with extra words: "…HEIRLOOM LANDBIER…LAGER", bottler
+ * lines with phone numbers) → contains; the label shows only part of the
+ * expected value → contained; small edit distance (≤1 edit per 8 chars,
+ * min 1) → close; else different.
  */
 export function compareText(expected: string, found: string): TextSimilarity {
   if (expected === found) return "exact";
   const ne = normalize(expected);
   const nf = normalize(found);
   if (ne === nf) return "case_only";
+  if (ne.length >= 4 && nf.includes(ne)) return "contains";
+  if (nf.length >= 4 && ne.includes(nf)) return "contained";
   const dist = levenshtein(ne, nf);
   const threshold = Math.max(1, Math.floor(Math.max(ne.length, nf.length) / 8));
   return dist <= threshold ? "close" : "different";
@@ -82,6 +94,7 @@ const ML_PER_UNIT: Record<string, number> = {
   "fluid ounce": 29.5735,
   "fluid ounces": 29.5735,
   gal: 3785.41,
+  gals: 3785.41,
   gallon: 3785.41,
   gallons: 3785.41,
 };
@@ -91,7 +104,7 @@ export function parseNetContents(text: string): number | null {
   const m = text
     .toLowerCase()
     .replace(/(?<=[a-z])\./g, "")
-    .match(/(\d+(?:\.\d+)?)\s*(fl\s*oz|fluid ounces?|milliliters?|litres?|liters?|gallons?|ml|cl|l|oz|gal)\b/);
+    .match(/(\d+(?:\.\d+)?)\s*(fl\s*oz|fluid ounces?|milliliters?|litres?|liters?|gallons?|gals?|ml|cl|l|oz)\b/);
   if (!m) return null;
   const unit = m[2].replace(/\s+/g, " ").trim();
   const factor = ML_PER_UNIT[unit];

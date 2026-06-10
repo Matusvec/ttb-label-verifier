@@ -39,6 +39,18 @@ function checkFuzzyField(
         status: "match",
         note: "Match (differs only in capitalization/punctuation).",
       };
+    case "contains":
+      return {
+        ...base,
+        status: "match",
+        note: "The application value appears on the label with additional surrounding text.",
+      };
+    case "contained":
+      return {
+        ...base,
+        status: "needs_review",
+        note: "The label shows only part of the application value — verify manually.",
+      };
     case "close":
       return {
         ...base,

@@ -14,6 +14,22 @@ describe("compareText", () => {
     expect(compareText("Stone's Throw", "STONE’S THROW")).toBe("case_only");
   });
 
+  it("matches when the application value appears within longer label text (real K-J bottler line)", () => {
+    expect(
+      compareText(
+        "Vinted & bottled by Kendall-Jackson Vineyards & Winery, Geyserville, California",
+        "VINTED & BOTTLED BY KENDALL-JACKSON VINEYARDS & WINERY, GEYSERVILLE, CALIFORNIA | 1.800.769.3649",
+      ),
+    ).toBe("contains");
+    expect(
+      compareText("Lager", "ESTATE® SERIES HEIRLOOM LANDBIER BREWED WITH PURPLE EGYPTIAN BARLEY LAGER"),
+    ).toBe("contains");
+  });
+
+  it("flags a label showing only part of the application value", () => {
+    expect(compareText("Buffalo Trace Bourbon Cream", "BUFFALO TRACE")).toBe("contained");
+  });
+
   it("flags near-misses as close, not matching", () => {
     expect(compareText("Old Tom Distillery", "Old Tim Distillery")).toBe("close");
   });
@@ -57,6 +73,7 @@ describe("parseNetContents", () => {
     expect(parseNetContents("750ml")).toBe(750);
     expect(parseNetContents("1 L")).toBe(1000);
     expect(parseNetContents("12 FL. OZ.")).toBeCloseTo(354.88, 1);
+    expect(parseNetContents("5 GALS")).toBeCloseTo(parseNetContents("5 gallons"), 5);
   });
 
   it("returns null for unparseable text", () => {
