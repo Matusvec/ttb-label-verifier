@@ -6,7 +6,7 @@
  */
 import { readFileSync } from "node:fs";
 
-const BASE = process.argv[2] ?? "http://localhost:3456";
+const BASE = process.argv[2] ?? "http://localhost:3000";
 const DIR = new URL("../public/cola/", import.meta.url);
 
 const csv = readFileSync(new URL("applications.csv", DIR), "utf8").trim().split("\n");

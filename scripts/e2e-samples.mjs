@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 
-const BASE = process.argv[2] ?? "http://localhost:3456";
+const BASE = process.argv[2] ?? "http://localhost:3000";
 
 const CASES = [
   {

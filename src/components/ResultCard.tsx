@@ -50,7 +50,7 @@ export default function ResultCard({ response }: { response: VerifyResponse }) {
                     <span className={`text-sm font-medium ${icon.color}`}>{icon.label}</span>
                   </div>
                   <p className="mt-0.5 text-sm text-ink-soft">{check.note}</p>
-                  {check.status !== "match" && check.status !== "skipped" && (
+                  {check.status !== "skipped" && (
                     <dl className="mt-2 space-y-1 text-sm">
                       <div className="flex gap-2">
                         <dt className="w-24 shrink-0 text-ink-soft">Application:</dt>

@@ -45,6 +45,7 @@ export default function SingleCheck() {
 
   async function importCsv(csvFile: File) {
     setError(null);
+    setResponse(null);
     try {
       const rows = await parseApplicationCsv(csvFile);
       setCsvRows(rows);
@@ -118,7 +119,10 @@ export default function SingleCheck() {
                 className="text-input mt-1 cursor-pointer"
                 onChange={(e) => {
                   const row = csvRows[Number(e.target.value)];
-                  if (row) setForm({ ...EMPTY_FORM, ...row.application });
+                  if (row) {
+                    setForm({ ...EMPTY_FORM, ...row.application });
+                    setResponse(null);
+                  }
                 }}
               >
                 {csvRows.map((row, i) => (

@@ -8,6 +8,8 @@ interface UploadDropzoneProps {
   /** Allow selecting many files at once (batch mode). */
   multiple?: boolean;
   onFiles?: (files: File[]) => void;
+  /** Lock the dropzone (e.g. while a batch run is in flight). */
+  disabled?: boolean;
 }
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
@@ -21,6 +23,7 @@ export default function UploadDropzone({
   onFile,
   multiple = false,
   onFiles,
+  disabled = false,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -52,21 +55,24 @@ export default function UploadDropzone({
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => inputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
-        setDragging(true);
+        if (!disabled) setDragging(true);
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => {
         e.preventDefault();
         setDragging(false);
-        handleFiles(e.dataTransfer.files);
+        if (!disabled) handleFiles(e.dataTransfer.files);
       }}
-      className={`w-full rounded-lg border-2 border-dashed p-6 text-center transition-colors cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${
-        dragging
-          ? "border-accent bg-accent/5"
-          : "border-rule bg-paper hover:border-accent/60"
+      className={`w-full rounded-lg border-2 border-dashed p-6 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${
+        disabled
+          ? "border-rule bg-paper opacity-60 cursor-not-allowed"
+          : dragging
+            ? "border-accent bg-accent/5 cursor-pointer"
+            : "border-rule bg-paper hover:border-accent/60 cursor-pointer"
       }`}
       aria-label={multiple ? "Add label images" : "Add a label image"}
     >

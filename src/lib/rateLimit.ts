@@ -7,8 +7,12 @@
  * carries a hard spend cap.
  */
 
+// Sized for the legitimate heavy case: a 200–300 label batch at
+// concurrency 4 (~70 requests/min sustained) must never trip the limit,
+// while runaway scripted abuse still does. The Gemini account's hard
+// spend cap remains the backstop.
 const WINDOW_MS = 60_000;
-const MAX_REQUESTS = 30;
+const MAX_REQUESTS = 150;
 
 const hits = new Map<string, number[]>();
 
